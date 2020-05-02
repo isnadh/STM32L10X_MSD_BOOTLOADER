@@ -36,6 +36,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+typedef void (*pFunction)(void);
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -58,9 +59,10 @@ static void MX_GPIO_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-bool is_appcode_exist(void);
-void jmp_to_appcode(void);
-bool is_button_down(void);
+bool IsAppExist(void);
+bool IsKeyPressed(void);
+
+void RunApp(void);
 
 /* USER CODE END 0 */
 
@@ -71,7 +73,7 @@ bool is_button_down(void);
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-
+	//RunApp();	//for debug
   /* USER CODE END 1 */
   
 
@@ -93,18 +95,21 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_USB_DEVICE_Init();
+  MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
-	if(!is_appcode_exist() || is_button_down())
+	if(!IsAppExist() || IsKeyPressed())
   {
     MX_USB_DEVICE_Init();
     while(1)
     {
+			//upgrade mode, blinking the LED
+			HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			HAL_Delay(300);
     }
   }
   else
   {
-    jmp_to_appcode();
+    RunApp();
   }
   /* USER CODE END 2 */
 
@@ -172,35 +177,49 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, BLD_EC_Pin|USB_EN_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, BTN_GND_Pin|USB_EN_Pin, GPIO_PIN_RESET);
 
-  /*Configure GPIO pins : BLD_EC_Pin USB_EN_Pin */
-  GPIO_InitStruct.Pin = BLD_EC_Pin|USB_EN_Pin;
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(PWR_EN_GPIO_Port, PWR_EN_Pin, GPIO_PIN_SET);
+
+  /*Configure GPIO pins : BTN_GND_Pin USB_EN_Pin */
+  GPIO_InitStruct.Pin = BTN_GND_Pin|USB_EN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BLD_BTN_Pin */
-  GPIO_InitStruct.Pin = BLD_BTN_Pin;
+  /*Configure GPIO pins : LED_Pin PWR_EN_Pin */
+  GPIO_InitStruct.Pin = LED_Pin|PWR_EN_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : BTN_Pin */
+  GPIO_InitStruct.Pin = BTN_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BLD_BTN_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BTN_GPIO_Port, &GPIO_InitStruct);
 
 }
 
 /* USER CODE BEGIN 4 */
-bool is_appcode_exist(void)
+bool IsAppExist(void)
 {
   uint32_t *mem = (uint32_t*)APP_ADDR;
   
-  if ((mem[0] == 0x00000000 || mem[0] == 0xFFFFFFFF) && \
-      (mem[1] == 0x00000000 || mem[1] == 0xFFFFFFFF) && \
-      (mem[2] == 0x00000000 || mem[2] == 0xFFFFFFFF) && \
-      (mem[3] == 0x00000000 || mem[3] == 0xFFFFFFFF))
+  if ((mem[0] == 0x00000000 || mem[0] == 0xFFFFFFFF)
+      &&(mem[1] == 0x00000000 || mem[1] == 0xFFFFFFFF)
+      &&(mem[2] == 0x00000000 || mem[2] == 0xFFFFFFFF)
+      &&(mem[3] == 0x00000000 || mem[3] == 0xFFFFFFFF))
   {
     return false;
   }
@@ -210,20 +229,40 @@ bool is_appcode_exist(void)
   }
 }
 
-void jmp_to_appcode(void)
+void RunApp(void)
 {
   /* Function pointer to the address of the user application. */
-  
-  HAL_DeInit();
-  /* Change the main stack pointer. */
-  __set_MSP(*(volatile uint32_t*)APP_ADDR);
-  SCB->VTOR = APP_ADDR;
-  ((void (*) (void)) (APP_ADDR+4u)) ();
+
+	uint32_t appStack;
+	pFunction appEntry;
+ 
+	//__disable_irq();		//won't work when this execute 
+  //HAL_NVIC_ClearPendingIRQ(SysTick_IRQn);
+ 
+	// get the application stack pointer (1st entry in the app vector table)
+	appStack = (uint32_t)*((__IO uint32_t*)APP_ADDR);
+ 
+	// Get the app entry point (2nd entry in the app vector table
+	appEntry = (pFunction)*(__IO uint32_t*)(APP_ADDR + 4);
+ 
+	HAL_RCC_DeInit();
+	HAL_DeInit();
+ 
+	SysTick->CTRL = 0;
+	SysTick->LOAD = 0;
+	SysTick->VAL  = 0;
+ 
+	// Reconfigure vector table offset to match the app location
+	SCB->VTOR = APP_ADDR;
+	__set_MSP(appStack); // Set app stack pointer
+	appEntry(); // Start the app
+ 
+	while (1); // never reached		
 }
 
-bool is_button_down(void)
+bool IsKeyPressed(void)
 {
-  return (HAL_GPIO_ReadPin(BLD_BTN_GPIO_Port, BLD_BTN_Pin) == GPIO_PIN_RESET);
+  return (HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin) == GPIO_PIN_RESET);
 }
 /* USER CODE END 4 */
 

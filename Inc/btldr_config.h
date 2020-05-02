@@ -14,13 +14,11 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #define _BTLDR_CONFIG_H_
 
 // STM32L100R8T6 - 64KB Flash Size
-#define DEV_CODE_ADDR           0x08000000
+#define DEV_CODE_ADDR           FLASH_BASE
 #define DEV_FLASH_SIZE          (64*1024)
 #define DEV_ERASE_PAGE_SIZE     1024
 //#define DEV_ERASE_PAGE_SIZE     2048
 
-//#define APP_ADDR                (DEV_CODE_ADDR + 0x8000)
-//#define APP_SIZE                (DEV_FLASH_SIZE - 0x8000)
 #define APP_ADDR                (DEV_CODE_ADDR + 0x5000)
 #define APP_SIZE                (DEV_FLASH_SIZE - 0x5000)
 
