@@ -99,12 +99,43 @@ int main(void)
   /* USER CODE BEGIN 2 */
 	if(!IsAppExist() || IsKeyPressed())
   {
+		uint8_t keyState = 0;
+		uint8_t count = 0;
+		//upgrade mode
     MX_USB_DEVICE_Init();
     while(1)
     {
-			//upgrade mode, blinking the LED
+			//long press key for 2S to exit upgrade
+			//begin of long press check
+			if (!IsKeyPressed() && keyState == 0)
+			{
+				keyState = 1;
+			}			
+			if (IsKeyPressed() && keyState == 1)
+			{
+				count++;
+				if(count == 10)
+				{
+					//keep LED lighting
+					HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+					while(IsKeyPressed())
+					{						
+					}
+					HAL_Delay(20);
+					//soft reset
+					SCB->VTOR = (FLASH_BASE | 0x0000);
+					NVIC_SystemReset();
+				}
+			}
+			else
+			{
+				count = 0;
+			}
+			//end of long press check
+			
+			//blinking the LED
 			HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-			HAL_Delay(300);
+			HAL_Delay(200);
     }
   }
   else
