@@ -3,10 +3,14 @@ Mass Storage Device Bootloader for STM32L1XX
 
 Tested with STM32L100R8T6.
 
+Basicklly, only the BTN is needed.
+
 
 Usage
 1. Keep BTN pin low level before plugin the usb cable;
 2. Drag and drop the bin file into the simulate flash drive.
+
+
 
 
 Thanks to:
