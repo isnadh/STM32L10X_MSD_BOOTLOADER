@@ -17,7 +17,9 @@ Bootloader size define:
 
 ![](https://github.com/lingex/STM32L10X_MSD_BOOTLOADER/blob/master/bl%20size.png)
 
+
 PINOUT:
+
 ![](https://github.com/lingex/STM32L10X_MSD_BOOTLOADER/blob/master/PINOUT.png)
 
 The PWR_EN USB_EN BTN_GND pin is not necessary, depends your board.
