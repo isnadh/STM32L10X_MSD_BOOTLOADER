@@ -10,15 +10,18 @@ Usage
 1. Keep BTN pressing before plugin the usb cable, until the LED blinks;
 2. Drag and drop the bin file into the simulate flash drive;
 3. If you don't have app in the flash yet, it will enter the MSD mode no mater the BTN is pressed or not;
-4. In MSD mode, press and hold the BTN for about 2S, the LED will keep lighting then release it, device will restart. 
+4. In MSD mode, press and hold the BTN for about 2S, the LED will keep lighting then release it, device will restart.;
 
+
+Bootloader size define:
 
 ![](https://github.com/lingex/STM32L10X_MSD_BOOTLOADER/blob/master/bl%20size.png)
 
-
+PINOUT:
 ![](https://github.com/lingex/STM32L10X_MSD_BOOTLOADER/blob/master/PINOUT.png)
-The PWR_EN USB_EN BTN_GND is not necessary, depends your board.
 
+The PWR_EN USB_EN BTN_GND pin is not necessary, depends your board.
+No need to care about the flash size, erase page size.
 
 
 
