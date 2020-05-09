@@ -14,8 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #define _BTLDR_CONFIG_H_
 
 #define DEV_CODE_ADDR           FLASH_BASE
-//#define DEV_FLASH_SIZE          FLASH_SIZE							//TODO this param can be read from the FLASH Size register, maybe fix later
-#define DEV_FLASH_SIZE          (MCU_FLASH_SIZE * 1024U)
+#define DEV_FLASH_SIZE          FLASH_SIZE
 #define DEV_ERASE_PAGE_SIZE     FLASH_PAGE_SIZE
 
 #define APP_ADDR                (DEV_CODE_ADDR + APP_OFFSET)
@@ -24,8 +23,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #define CONFIG_READ_FLASH       1U
 
 
-#define MCU_FLASH_SIZE					64U					//MCU flash size (kb)
-#define APP_OFFSET							0x5000			//bootloader size (byte), also the app will start
+#define APP_OFFSET							0x5000			//bootloader size (byte)
 
 
 

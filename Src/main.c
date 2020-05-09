@@ -27,6 +27,7 @@
 #include <stdint.h>					//lingex
 #include <stdbool.h>
 #include "btldr_config.h"
+#include "fat32.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -83,20 +84,17 @@ int main(void)
   HAL_Init();
 
   /* USER CODE BEGIN Init */
-
+  while(!fat32_init())
+	{
+		//flash addr error
+	}
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-
-  /* USER CODE END SysInit */
-
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  //MX_USB_DEVICE_Init();
-  /* USER CODE BEGIN 2 */
+	MX_GPIO_Init();
 	if(!IsAppExist() || IsKeyPressed())
   {
 		uint8_t keyState = 0;
@@ -142,7 +140,15 @@ int main(void)
   {
     RunApp();
   }
-  /* USER CODE END 2 */
+
+  /* USER CODE END SysInit */
+
+  /* Initialize all configured peripherals */
+  MX_GPIO_Init();
+  MX_USB_DEVICE_Init();
+  /* USER CODE BEGIN 2 */
+
+/* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
