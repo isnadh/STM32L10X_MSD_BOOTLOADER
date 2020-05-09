@@ -20,10 +20,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 #define APP_ADDR                (DEV_CODE_ADDR + APP_OFFSET)
 #define APP_SIZE                (DEV_FLASH_SIZE - APP_OFFSET)
 
-#define CONFIG_READ_FLASH       1U
+#define CONFIG_READ_FLASH       0U
 
 
-#define APP_OFFSET							0x5000			//bootloader size (byte)
+#define APP_OFFSET							0x3000			//bootloader size (byte)
 
 
 

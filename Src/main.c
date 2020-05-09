@@ -64,6 +64,7 @@ bool IsAppExist(void);
 bool IsKeyPressed(void);
 
 void RunApp(void);
+void Delay(uint16_t n);
 
 /* USER CODE END 0 */
 
@@ -75,6 +76,7 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	//RunApp();	//for debug
+	volatile uint32_t timer; 
   /* USER CODE END 1 */
   
 
@@ -101,6 +103,7 @@ int main(void)
 		uint8_t count = 0;
 		//upgrade mode
     MX_USB_DEVICE_Init();
+#if 1
     while(1)
     {
 			//long press key for 2S to exit upgrade
@@ -115,14 +118,19 @@ int main(void)
 				if(count == 10)
 				{
 					//keep LED lighting
-					HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+					//HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);
+					LL_GPIO_SetOutputPin(LED_GPIO_Port, LED_Pin);
+					//LL_GPIO_SetOutputPin(USB_EN_GPIO_Port, USB_EN_Pin);
 					while(IsKeyPressed())
-					{						
+					{
 					}
-					HAL_Delay(20);
+					//HAL_Delay(20);
+					Delay(20);
+					RunApp();
+					
 					//soft reset
-					SCB->VTOR = (FLASH_BASE | 0x0000);
-					NVIC_SystemReset();
+					//SCB->VTOR = (FLASH_BASE | 0x0000);
+					//NVIC_SystemReset();
 				}
 			}
 			else
@@ -132,9 +140,11 @@ int main(void)
 			//end of long press check
 			
 			//blinking the LED
-			HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
-			HAL_Delay(200);
+			LL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
+			//HAL_Delay(200);
+			Delay(200);
     }
+#endif
   }
   else
   {
@@ -148,7 +158,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   /* USER CODE BEGIN 2 */
 
-/* USER CODE END 2 */
+  /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
@@ -167,39 +177,50 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
-  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
-  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage 
-  */
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks 
-  */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL12;
-  RCC_OscInitStruct.PLL.PLLDIV = RCC_PLL_DIV2;
-  if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /** Initializes the CPU, AHB and APB busses clocks 
-  */
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
-                              |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  LL_FLASH_Enable64bitAccess();
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  LL_FLASH_SetLatency(LL_FLASH_LATENCY_0);
+
+  if(LL_FLASH_GetLatency() != LL_FLASH_LATENCY_0)
   {
-    Error_Handler();
+  Error_Handler();  
   }
+  LL_PWR_SetRegulVoltageScaling(LL_PWR_REGU_VOLTAGE_SCALE1);
+  LL_RCC_HSE_Enable();
+
+   /* Wait till HSE is ready */
+  while(LL_RCC_HSE_IsReady() != 1)
+  {
+    
+  }
+  LL_RCC_HSI_Enable();
+
+   /* Wait till HSI is ready */
+  while(LL_RCC_HSI_IsReady() != 1)
+  {
+    
+  }
+  LL_RCC_HSI_SetCalibTrimming(16);
+  LL_RCC_PLL_ConfigDomain_SYS(LL_RCC_PLLSOURCE_HSE, LL_RCC_PLL_MUL_12, LL_RCC_PLL_DIV_2);
+  LL_RCC_PLL_Enable();
+
+   /* Wait till PLL is ready */
+  while(LL_RCC_PLL_IsReady() != 1)
+  {
+    
+  }
+  LL_RCC_SetAHBPrescaler(LL_RCC_SYSCLK_DIV_1);
+  LL_RCC_SetAPB1Prescaler(LL_RCC_APB1_DIV_1);
+  LL_RCC_SetAPB2Prescaler(LL_RCC_APB2_DIV_1);
+  LL_RCC_SetSysClkSource(LL_RCC_SYS_CLKSOURCE_HSI);
+
+   /* Wait till System clock is ready */
+  while(LL_RCC_GetSysClkSource() != LL_RCC_SYS_CLKSOURCE_STATUS_HSI)
+  {
+  
+  }
+  LL_SetSystemCoreClock(16000000);
 }
 
 /**
@@ -209,42 +230,60 @@ void SystemClock_Config(void)
   */
 static void MX_GPIO_Init(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
 
   /* GPIO Ports Clock Enable */
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOH);
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+  LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, BTN_GND_Pin|USB_EN_Pin, GPIO_PIN_RESET);
+  /**/
+  LL_GPIO_ResetOutputPin(GPIOA, BTN_GND_Pin|USB_EN_Pin);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET);
+  /**/
+  LL_GPIO_ResetOutputPin(LED_GPIO_Port, LED_Pin);
 
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(PWR_EN_GPIO_Port, PWR_EN_Pin, GPIO_PIN_SET);
+  /**/
+  LL_GPIO_SetOutputPin(PWR_EN_GPIO_Port, PWR_EN_Pin);
 
-  /*Configure GPIO pins : BTN_GND_Pin USB_EN_Pin */
-  GPIO_InitStruct.Pin = BTN_GND_Pin|USB_EN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  /**/
+  GPIO_InitStruct.Pin = BTN_GND_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(BTN_GND_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BTN_Pin */
+  /**/
   GPIO_InitStruct.Pin = BTN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BTN_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_UP;
+  LL_GPIO_Init(BTN_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LED_Pin PWR_EN_Pin */
-  GPIO_InitStruct.Pin = LED_Pin|PWR_EN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  /**/
+  GPIO_InitStruct.Pin = USB_EN_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(USB_EN_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = LED_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(LED_GPIO_Port, &GPIO_InitStruct);
+
+  /**/
+  GPIO_InitStruct.Pin = PWR_EN_Pin;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_OUTPUT;
+  GPIO_InitStruct.Speed = LL_GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.OutputType = LL_GPIO_OUTPUT_PUSHPULL;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  LL_GPIO_Init(PWR_EN_GPIO_Port, &GPIO_InitStruct);
 
 }
 
@@ -254,16 +293,11 @@ bool IsAppExist(void)
   uint32_t *mem = (uint32_t*)APP_ADDR;
   
   if ((mem[0] == 0x00000000 || mem[0] == 0xFFFFFFFF)
-      &&(mem[1] == 0x00000000 || mem[1] == 0xFFFFFFFF)
-      &&(mem[2] == 0x00000000 || mem[2] == 0xFFFFFFFF)
-      &&(mem[3] == 0x00000000 || mem[3] == 0xFFFFFFFF))
+      &&(mem[1] == 0x00000000 || mem[1] == 0xFFFFFFFF))
   {
     return false;
   }
-  else
-  {
-    return true;
-  }
+	return true;
 }
 
 void RunApp(void)
@@ -282,8 +316,9 @@ void RunApp(void)
 	// Get the app entry point (2nd entry in the app vector table
 	appEntry = (pFunction)*(__IO uint32_t*)(APP_ADDR + 4);
  
-	HAL_RCC_DeInit();
-	HAL_DeInit();
+	//HAL_RCC_DeInit();
+	//LL_RCC_DeInit();
+	HAL_DeInit();		
  
 	SysTick->CTRL = 0;
 	SysTick->LOAD = 0;
@@ -297,9 +332,21 @@ void RunApp(void)
 	while (1); // never reached		
 }
 
+void Delay(uint16_t n)
+{
+	for (uint16_t i = n; i > 0; i--)
+	{
+		volatile uint16_t j = 2000;
+		while(j-- > 0)
+		{
+		}
+	}
+}
+
 bool IsKeyPressed(void)
 {
-  return (HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin) == GPIO_PIN_RESET);
+  //return (HAL_GPIO_ReadPin(BTN_GPIO_Port, BTN_Pin) == GPIO_PIN_RESET);
+	return !LL_GPIO_IsInputPinSet(BTN_GPIO_Port, BTN_Pin);
 }
 /* USER CODE END 4 */
 

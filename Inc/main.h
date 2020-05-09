@@ -29,6 +29,16 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32l1xx_hal.h"
+#include "stm32l1xx_ll_rcc.h"
+#include "stm32l1xx_ll_bus.h"
+#include "stm32l1xx_ll_system.h"
+#include "stm32l1xx_ll_exti.h"
+#include "stm32l1xx_ll_cortex.h"
+#include "stm32l1xx_ll_utils.h"
+#include "stm32l1xx_ll_pwr.h"
+#include "stm32l1xx_ll_dma.h"
+#include "stm32l1xx.h"
+#include "stm32l1xx_ll_gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -58,19 +68,19 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define BTN_GND_Pin GPIO_PIN_0
+#define BTN_GND_Pin LL_GPIO_PIN_0
 #define BTN_GND_GPIO_Port GPIOA
-#define BTN_Pin GPIO_PIN_7
+#define BTN_Pin LL_GPIO_PIN_7
 #define BTN_GPIO_Port GPIOC
-#define SWDIO_Pin GPIO_PIN_13
+#define SWDIO_Pin LL_GPIO_PIN_13
 #define SWDIO_GPIO_Port GPIOA
-#define SWCLK_Pin GPIO_PIN_14
+#define SWCLK_Pin LL_GPIO_PIN_14
 #define SWCLK_GPIO_Port GPIOA
-#define USB_EN_Pin GPIO_PIN_15
+#define USB_EN_Pin LL_GPIO_PIN_15
 #define USB_EN_GPIO_Port GPIOA
-#define LED_Pin GPIO_PIN_5
+#define LED_Pin LL_GPIO_PIN_5
 #define LED_GPIO_Port GPIOB
-#define PWR_EN_Pin GPIO_PIN_7
+#define PWR_EN_Pin LL_GPIO_PIN_7
 #define PWR_EN_GPIO_Port GPIOB
 /* USER CODE BEGIN Private defines */
 
